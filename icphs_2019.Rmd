@@ -1,0 +1,411 @@
+---
+title: "INSP"
+author: "Nina Hosseini-Kivanani"
+date: "February 27, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+rm(list=ls())
+```
+
+```{r}
+library(plyr);library(pander);library(dplyr)
+```
+
+
+```{r}
+# Loading Korean English f0 data
+f0 <- read.csv("C:/Users/Nina/Desktop/data/1/inspe-f0/Stat/KoreanEnglish_F0_Data_4Ss_Ninan.csv", header=F)
+
+str(f0)
+head(f0)
+tail(f0)
+
+
+names(f0) <- c("subid", "tk", "filename", "F0_Hz")
+head(f0)
+
+#to remove NaN from KEf0
+f0[ is.na(f0) ] <- NA
+KEf0 <- na.omit(f0)
+
+index <-complete.cases(KEf0)
+KEf0_cc <- KEf0[index,]
+
+#for sorting the data
+
+head(KEf0)
+```
+
+```{r}
+head(KEf0)
+#to create a column for subject
+KEf0$subj <- as.character(NA)
+KEf0[KEf0$subid==1103,]$subj <- "Enone"
+KEf0[KEf0$subid==1104,]$subj <- "Entwo"
+KEf0[KEf0$subid==1108,]$subj <- "Enthree"
+KEf0[KEf0$subid==1111,]$subj <- "Entfour"
+KEf0[KEf0$subid==1112,]$subj <- "Entwofive"
+
+KEf0[KEf0$subid==3101,]$subj <- "KoEnsix"
+KEf0[KEf0$subid==3113,]$subj <- "KoEnseven"
+KEf0[KEf0$subid==3106,]$subj <- "koEneigth"
+KEf0[KEf0$subid==3111,]$subj <- "koEntnine"
+KEf0[KEf0$subid==3112,]$subj <- "koEnten"
+
+sum(is.na(KEf0$subj))
+
+# to create a column for language (depentent variable)
+KEf0$Lang <- as.character(NA)
+KEf0[KEf0$subid==1103,]$Lang <- "En"
+KEf0[KEf0$subid==1104,]$Lang <- "En"
+KEf0[KEf0$subid==1108,]$Lang <- "En"
+KEf0[KEf0$subid==1111,]$Lang <- "En"
+KEf0[KEf0$subid==1112,]$Lang <- "En"
+
+KEf0[KEf0$subid==3101,]$Lang <- "KoEn"
+KEf0[KEf0$subid==3113,]$Lang <- "KoEn"
+KEf0[KEf0$subid==3106,]$Lang <- "KoEn"
+KEf0[KEf0$subid==3111,]$Lang <- "KoEn"
+KEf0[KEf0$subid==3112,]$Lang <- "KoEn"
+
+
+
+# To check Na
+sum(is.na(KEf0$Lang))
+
+# to create a column for Gender (dependent variable)
+KEf0$Gender<-as.character(NA)
+KEf0[KEf0$subid==1103,]$Gender <- "Male"
+KEf0[KEf0$subid==1104,]$Gender <- "Female"
+KEf0[KEf0$subid==1108,]$Gender <- "Male"
+KEf0[KEf0$subid==1111,]$Gender <- "Female"
+KEf0[KEf0$subid==1112,]$Gender <- "Female"
+
+
+KEf0[KEf0$subid==3101,]$Gender <- "Male"
+KEf0[KEf0$subid==3113,]$Gender <- "Female"
+KEf0[KEf0$subid==3106,]$Gender <- "Female"
+KEf0[KEf0$subid==3111,]$Gender <- "Male"
+KEf0[KEf0$subid==3112,]$Gender <- "Male"
+
+
+```
+
+```{r}
+# to check number of NA
+sum(is.na(KEf0$Gender))
+
+#to create a column for task(baseline and wr)
+KEf0$Task<-as.character(NA)
+KEf0[KEf0$tk=="baseline",]$Task <- "baseline"
+KEf0[KEf0$tk=="wr",]$Task <- "wr"
+
+head(KEf0)
+
+#factors
+KEf0[sapply(KEf0, is.character)] <- lapply(KEf0[sapply(KEf0, is.character)], 
+                                           as.factor)
+```
+
+```{r}
+####
+
+KEf0.mean<-ddply(KEf0,~subid+Task+Lang+Gender,summarise,mean=mean(F0_Hz),sd=sd(F0_Hz))
+# foo <- setDT(KEf0)[, lapply(.SD, mean), by = list(subid, subj, gender, tk, F0_Hzl)]
+# print(foo)
+
+#KEf0.mean
+pander(KEf0.mean)
+
+####H0: the mean of F0 of English speakers are equal to Korean speakers?!!!
+fe.test<-t.test<-t.test(F0_Hz ~ Lang, data=KEf0[KEf0$Gender=="Female",])
+fe.test
+ma.test<-t.test(F0_Hz ~ Lang, data=KEf0[KEf0$Gender=="Male",])
+ma.test
+# en.test<-t.test(F0_Hz ~ Gender, data=KEf0[KEf0$Lang=="En",])
+# en.test
+# koen.test<-t.test(F0_Hz ~ Gender, data=KEf0[KEf0$Lang=="KoEn",])
+# koen.test
+
+```
+
+```{r}
+KEf0.mean<-ddply(KEf0,~Lang+Gender+Task,summarise,mean=mean(F0_Hz),sd=sd(F0_Hz))
+KEf0.mean
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+####
+#lapply(split(KEf0, KEf0$Task),function(x)with(x, t.test(F0_Hz~Lang, KEf0$Gender)))
+#calculating mean and sd of F0MOD_Hz(model talker)
+#ddply(KEf0,~Lang+Gender,summarise,mean=mean(F0MOD_Hz),sd=sd(F0MOD_Hz))
+#summary(KEf0$F0MOD_Hz)
+
+#calculating mean and sd of VOTMOD_ms(model talker)
+#ddply(KEf0,~Task+Lang+Gender,summarise,mean=mean(VOTMOD_ms),sd=sd(VOTMOD_ms))
+
+#another way of calculating mean and sd
+KEf0.mean<-group_by(KEf0, subid, Task, Lang, Gender) %>%
+  summarize(mean.F0_Hz = mean(F0_Hz))
+            #mean.F0MOD_Hz = mean(F0MOD_Hz),
+            #sd.F0MOD_Hz=sd(F0MOD_Hz),
+            #mean.VOTMOD_ms = mean(VOTMOD_ms),
+            #sd.VOTMOD_ms=sd(VOTMOD_ms))
+KEf0.mean
+#pander(test)
+# 
+# library(knitr)
+# # just use :: for specific code to run from pacakage 
+# knitr::kable(KEf0.mean, digits = 2)
+
+```
+
+```{r}
+# library(pander)
+# pander(KEf0.mean)
+
+```
+
+
+
+```{r}
+library(dplyr)
+KEf0<- arrange(KEf0, subid, F0_Hz)
+NKEf0= KEf0 %>%
+  select(subj, Task, Gender, Lang, F0_Hz)
+
+#Mean without subsituating
+mean(NKEf0[NKEf0$Gender=="Male",]$F0_Hz)
+mean(NKEf0[NKEf0$Gender=="Female",]$F0_Hz)
+
+#LMEM  
+#lmertest+pvalue
+options(digits = 3)
+library(lme4)
+library(languageR)
+#linear mixed effect regression#
+lmerF0<-lmer(F0_Hz~ Lang * Gender
+            +(1|subj), data= NKEf0, REML = F)
+summary(lmerF0)
+#Main model
+library(lmerTest)
+model1 <- lmer(F0_Hz ~ Task * Gender *Lang + (1 + Task | subj), data = NKEf0, REML = F)
+summary(model1)
+anova(lmerF0,model1)
+
+
+
+#lmerF0task<-lmer(F0_Hz~ Lang * Gender * Task
+            # +(1|word), data= NKEf0, REML = F)
+#summary(lmerF0task)
+```
+```{r}
+
+
+
+library(lmerTest)
+model1 <- lmer(F0_Hz ~ Task * Gender *Lang + (1 + Task | subj), data = NKEf0, REML = F)
+summary(model1)
+anova(lmerF0,model1)
+#rotate
+levels(NKEf0$Lang)
+levels(NKEf0$Gender)
+levels(NKEf0$Task)
+levels(NKEf0$Lang) <- c("En", "KoEn")
+levels(NKEf0$Gender)<-c("Female", "Male")
+levels(NKEf0$Task)<-c("WR", "baseline")
+NKEf0$Gender <- factor(NKEf0$Gender, levels = c("Male", "Female"))
+head(NKEf0$Gender)
+lmerF0task<-lmer(F0_Hz~ Lang * Gender * Task
+                 +(1+ Task | subj), data= NKEf0, REML = F)
+summary(lmerF0task)
+
+# 
+# library(sjPlot) # table functions
+# library(sjmisc) # sample data
+# sjt.lmer
+# sjt.lmer(lmerF0task)
+# 
+#  #To construct the residual plot
+# 
+# plot(fitted(lmerF0),residuals(lmerF0))
+# plot(fitted(lmerF0task),residuals(lmerF0task))
+# 
+# #to check residual f
+# hist(residuals(lmerF0task))
+# qqnorm(residuals(lmerF0task))
+# 
+# ranef(lmerF0task, augFrame = TRUE) 
+
+
+```
+
+```{r}
+
+library(knitr)
+#with task /without task
+anova(lmerF0, lmerF0task)
+
+
+#using lme4+pvalue
+#library(lme4)
+#lmerF0<-lmer(F0_Hz~ Lang * Gender
+           #  + (1|subid)+(1|word), data= NKEf0, REML = F)
+#summary(lmerF0)
+#anova(lmerF0)
+summary(lmerF0task)$coefficients  
+write.csv( summary(lmerF0task)$coefficients )
+# "latex.lme" <-
+#   function(object, title="",parameter=NULL,file="",shadep=0.05,
+#            caption=NULL,label=NULL,ctable=FALSE,form=NULL,
+#            interceptp=FALSE,  moredec= 0, where="!htbp",...) {
+#     options(Hverbose=FALSE)
+#     require('Hmisc')
+#     require('nlme')
+#     latex.summary.lme(summary(object),title=title,parameter=parameter, 
+#                       file=file, shadep=shadep, caption=caption,
+#                       label=label, ctable=ctable, form=form, moredec=moredec, where=where,...)
+#   }
+
+#draw a barplot
+###To remove the background color of plots window in r. (to have a good format for paper)
+
+```
+
+
+```{r}
+library(ggplot2)
+cleanup<-theme(panel.grid.major=element_blank(),
+               #panel.grid.major=element_blank(),
+               panel.background=element_blank(),
+               axis.line=element_line(color = "black"))+
+  theme(axis.line.x = element_line(color="black", size = 1),
+        axis.line.y = element_line(color="black", size = 1))
+```
+
+
+```{r}
+
+
+###ggplot2
+library(ggplot2)
+KEf0bar<-ggplot(NKEf0, aes(Gender, F0_Hz, fill=Task)) 
+KEf0bar
+KEf0bar+
+  stat_summary(fun.y = mean,
+               geom="bar",
+               position="dodge",
+               color="black")+
+  geom_hline(aes(yintercept=195), colour="#6b0000", linetype="solid")+
+    facet_grid(~Lang,scales='free')+
+  #draw graph with error bar??
+  stat_summary(fun.data = mean_cl_normal,
+               geom = "errorbar",
+               position = position_dodge((width=0.90)),
+               width=.2)+
+  #define title and labels for the graph
+  #ggtitle("f0 in English and Korean-English Speakers") +
+  labs(x="Gender",y="f0 (Hz)")+
+  #to clear gray background of graph
+  cleanup+
+  #to change the label of bargraph
+  scale_x_discrete(labels= c("Male", "Female"))+
+  scale_fill_manual(name="Production type",
+                    labels=c("Baseline", "Test"),
+                    values=c("Blue4", "Gray"))
+KEf0bar
+
+```
+
+
+```{r}
+
+
+
+NKEf0n<- ggplot(data = NKEf0, aes(Gender, F0_Hz, fill=Task)) + geom_line(aes(colour=subj))
+
+NKEf0n+
+  stat_summary(fun.y = mean,
+               geom="line",
+               position="dodge",
+               color="black")+
+  geom_hline(aes(yintercept=195), colour="#6b0000", linetype="dashed")+
+    facet_grid(~Lang,scales='free')+
+  #draw graph with error bar??
+  stat_summary(fun.data = mean_cl_normal,
+               geom = "line",
+               position = position_dodge((width=0.90)),
+               width=.2)+
+  #define title and labels for the graph
+  ggtitle("F0 in English and Korean-English Speakers") +
+  labs(x="Gender",y="F0 (Hz)")
+```
+
+
+```{r}
+
+##EXTRA
+library("reshape2")
+mdf <- melt(NKEf0, id.vars="Task", value.name="F0_Hz", variable.name="subj")
+
+ggplot(data=mdf, aes(x=Task, y=F0_Hz, group = Task, colour = subj)) +
+    geom_line() +
+    geom_point( size=4, shape=21, fill="white")
+```
+```{r}
+##EXTRA
+ggplot(NKEf0, aes(x=factor(Task), y=F0_Hz, linetype=subj, group= subj)) + geom_line()
+```
+
+
+
+```{r}
+##EXTRA
+library(ggplot2)
+KEf0bar<-ggplot(NKEf0, aes(Gender, subj, F0_Hz, fill=Task)) 
+KEf0bar
+KEf0bar+
+  stat_summary(fun.y = mean,
+               geom="line",
+               position="dodge",
+               color="black")+
+  geom_hline(aes(yintercept=195), colour="#6b0000", linetype="dashed")+
+    facet_grid(~Lang,scales='free')+
+  #draw graph with error bar??
+  stat_summary(fun.data = mean_cl_normal,
+               geom = "line",
+               position = position_dodge((width=0.90)),
+               width=.2)+
+  #define title and labels for the graph
+  ggtitle("F0 in English and Korean-English Speakers") +
+  labs(x="Gender",y="F0 (Hz)")+
+  #to clear gray background of graph
+  cleanup+
+  #to change the label of bargraph
+  scale_x_discrete(labels= c("Male", "Female"))+
+  scale_fill_manual(name="Production type",
+                    labels=c("Baseline", "Word-reading"),
+                    values=c("Blue4", "Gray"))
+KEf0bar
+```
+
